@@ -8,6 +8,10 @@ from langchain_core.prompts import PromptTemplate
 from langchain_openai import OpenAIEmbeddings
 from pinecone import Pinecone
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 pinecone_api_key = os.getenv("PINECONE_API_KEY")
 
 def extract_medical_metadata(result):
@@ -17,7 +21,7 @@ def extract_medical_metadata(result):
         # medical_metadata.append(doc.metadata["Diagnoses"])
     return result
 
-def get_medical_chain(symptoms):
+def get_medical_chain(symptoms,claim_id):
     pc = Pinecone(api_key=pinecone_api_key)
     index = pc.Index("madicaldata")
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
@@ -42,8 +46,8 @@ def get_medical_chain(symptoms):
 
     medical_filter = LLMChainFilter.from_llm(medical_chat_model, prompt=medical_relevance_template)
     medical_compression_retriever = ContextualCompressionRetriever(
-        base_compressor=medical_filter, base_retriever=vector_store.as_retriever(search_kwargs={"k":3})
+        base_compressor=medical_filter, base_retriever=vector_store.as_retriever(search_kwargs={"k":1,'filter': {'ClaimID':claim_id}})
         )
 
-    medical_retriever_chain = medical_compression_retriever | extract_medical_metadata
+    medical_retriever_chain = vector_store.as_retriever(search_kwargs={"k":1,'filter': {'ClaimID':claim_id}}) | extract_medical_metadata
     return medical_retriever_chain.invoke(symptoms)
