@@ -37,8 +37,11 @@ if st.button("Submit", type="primary"):
                             st.write(   doc.page_content)
                             if hasattr(doc, 'metadata') and doc.metadata:
                                 st.write("**Metadata:**")
-                                for key, value in doc.metadata.items():
-                                    st.write(f"- {key}: {value}")
+                                for key, value in list(doc.metadata.items())[-2:]:
+                                    if key == "Status":
+                                        st.write(f"- Predicted {key}: {value}")
+                                    else:
+                                        st.write(f"- {key.title()}: {value}")
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
     else:
